@@ -1,8 +1,8 @@
 1. import js
 
 ```
-  <script src="/123/xlsx.full.min.js"></script>
-  <script src="/123/213.js"></script>
+  <script src="xlsx.full.min.js"></script>
+  <script src="excletotxt.js"></script>
 ```
 
 2. add script
