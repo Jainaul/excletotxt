@@ -8,8 +8,6 @@
 2. add script
 
 ```
-  <div id="download-link1"></div>
-  <div id="download-link2"></div>
   <script>
 	const filePath1 = '/test2.xlsx';
 	const sheetName1 = 'Sheet2';
@@ -29,4 +27,6 @@
 	
 ......more and more
   </script>
+  <div id="download-link1"></div>
+  <div id="download-link2"></div>
 ```
