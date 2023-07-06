@@ -1,54 +1,72 @@
 // Read the contents of a specified range of cells from an Excel file
 function readExcelCellRange(filePath, sheetName, startCell) {
-  return new Promise(resolve => {
-    const oReq = new XMLHttpRequest();
-    oReq.open('GET', filePath, true);
-    oReq.responseType = 'arraybuffer';
+    return new Promise(resolve => {
+      const oReq = new XMLHttpRequest();
+      oReq.open('GET', filePath, true);
+      oReq.responseType = 'arraybuffer';
 
-    oReq.onload = function (e) {
-      const arraybuffer = oReq.response;
-      const data = new Uint8Array(arraybuffer);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const worksheet = workbook.Sheets[sheetName];
+      oReq.onload = function (e) {
+        const arraybuffer = oReq.response;
+        const data = new Uint8Array(arraybuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const worksheet = workbook.Sheets[sheetName];
 
-      const lastCell = worksheet['!ref'].split(':')[1];
-      const lastRow = XLSX.utils.decode_cell(lastCell).r;
+        const lastCell = worksheet['!ref'].split(':')[1];
+        const lastRow = XLSX.utils.decode_cell(lastCell).r;
 
-      const nextRow = lastRow + 1;
+        const nextRow = lastRow + 1;
 
-      const range = XLSX.utils.decode_range(`${startCell}:A${nextRow}`);
-      const cellValues = [];
+        const range = XLSX.utils.decode_range(`${startCell}2:${startCell}${nextRow}`);
+        const cellValues = [];
 
-      for (let row = range.s.r; row <= range.e.r; row++) {
-        for (let col = range.s.c; col <= range.e.c; col++) {
-          const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+        for (let row = range.s.r; row <= range.e.r; row++) {
+          const cellAddress = XLSX.utils.encode_cell({ r: row, c: range.s.c });
           const cellValue = worksheet[cellAddress]?.v;
           cellValues.push(cellValue);
         }
-      }
 
-      resolve(cellValues);
+        resolve(cellValues);
+      };
+
+      oReq.send();
+    });
+}
+
+// Generate download link and create download file
+function generateDownloadLink(content, fileName) {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
+}
+
+// Parse the query parameters from the URL
+function parseQueryParameters(url) {
+    const queryString = url.split('?')[1];
+    const queryParams = new URLSearchParams(queryString);
+
+    return {
+      filePath: queryParams.get('file'),
+      sheetName: decodeURIComponent(queryParams.get('sheet')),
+      startCell: queryParams.get('line'),
+      fileName: queryParams.get('name')
     };
-
-    oReq.send();
-  });
 }
 
-// Generate download links and create download files
-function generateDownloadLink(content, fileName, targetDivId, linkText) {
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
+// Handle the request and process the Excel file
+function handleRequest(url) {
+    const { filePath, sheetName, startCell, fileName } = parseQueryParameters(url);
 
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  link.innerHTML = linkText;
+    if (filePath && sheetName && startCell && fileName) {
+      const currentURL = new URL(url);
+      const currentDomain = `${currentURL.protocol}//${currentURL.host}`;
+      const fullFilePath = `${currentDomain}${filePath}`;
 
-  document.getElementById(targetDivId).appendChild(link);
+      readExcelCellRange(fullFilePath, sheetName, startCell)
+        .then(content => generateDownloadLink(content.join('\n'), fileName));
+    }
 }
 
-// Process Excel files and generate download links
-function handleExcelFile(filePath, sheetName, startCell, fileName, targetDivId, linkText) {
-  readExcelCellRange(filePath, sheetName, startCell)
-    .then(content => generateDownloadLink(content.join('\n'), fileName, targetDivId, linkText));
-}
