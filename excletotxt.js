@@ -63,7 +63,7 @@ function handleRequest(url) {
     if (filePath && sheetName && startCell && fileName) {
       const currentURL = new URL(url);
       const currentDomain = `${currentURL.protocol}//${currentURL.host}`;
-      const fullFilePath = `${currentDomain}${filePath}`;
+      const fullFilePath = `${filePath}`;
 
       readExcelCellRange(fullFilePath, sheetName, startCell)
         .then(content => generateDownloadLink(content.join('\n'), fileName));
